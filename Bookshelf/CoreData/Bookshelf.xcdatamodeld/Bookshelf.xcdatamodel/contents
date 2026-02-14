@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<model type="com.apple.IDECoreDataModeler.DataModel"
+       documentVersion="1.0"
+       lastSavedToolsVersion="22758"
+       systemVersion="23B92"
+       minimumToolsVersion="Automatic"
+       sourceLanguage="Swift"
+       usedWithSwiftData="NO"
+       userDefinedModelVersionIdentifier="">
+
+    <entity name="BookEntity"
+            representedClassName="BookEntity"
+            syncable="YES"
+            codeGenerationType="class">
+
+        <!--
+            id: Device-generated UUID. Never nil. Unique across all devices.
+            We use device-generated IDs (not server IDs) so that records can be
+            created locally before they reach the server.
+        -->
+        <attribute name="id"
+                   optional="NO"
+                   attributeType="UUID"
+                   usesScalarValueType="NO"/>
+
+        <attribute name="title"
+                   optional="NO"
+                   attributeType="String"
+                   defaultValueString=""/>
+
+        <attribute name="author"
+                   optional="NO"
+                   attributeType="String"
+                   defaultValueString=""/>
+
+        <!--
+            rating: 1–5 stars. Int16 is the smallest integer type Core Data offers,
+            which is sufficient for a 1–5 range.
+        -->
+        <attribute name="rating"
+                   optional="NO"
+                   attributeType="Integer 16"
+                   defaultValueString="3"
+                   usesScalarValueType="YES"/>
+
+        <attribute name="notes"
+                   optional="YES"
+                   attributeType="String"/>
+
+        <attribute name="isRead"
+                   optional="NO"
+                   attributeType="Boolean"
+                   defaultValueString="NO"
+                   usesScalarValueType="YES"/>
+
+        <!--
+            syncStatus: Stored as String because Core Data has no native enum type.
+            Valid values: "pending" | "synced" | "failed"
+            The Swift layer converts to/from the SyncStatus enum.
+        -->
+        <attribute name="syncStatus"
+                   optional="NO"
+                   attributeType="String"
+                   defaultValueString="pending"/>
+
+        <!--
+            remoteId: The JSONPlaceholder post ID assigned after the first successful sync.
+            0 means "not yet synced" (Core Data does not support true optional scalars).
+            BookEntity+Extensions.swift converts 0 -> nil in the domain model.
+        -->
+        <attribute name="remoteId"
+                   optional="NO"
+                   attributeType="Integer 64"
+                   defaultValueString="0"
+                   usesScalarValueType="YES"/>
+
+        <attribute name="createdAt"
+                   optional="NO"
+                   attributeType="Date"
+                   usesScalarValueType="NO"/>
+
+        <attribute name="updatedAt"
+                   optional="NO"
+                   attributeType="Date"
+                   usesScalarValueType="NO"/>
+
+    </entity>
+</model>

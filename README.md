@@ -909,7 +909,7 @@ Testovi koriste `PersistenceController(inMemory: true)`  -  Core Data čuva poda
 
 ### Zašto ne SwiftData (iOS 17)?
 
-SwiftData je budućnost iOS persistencije. Međutim, većina produkcijskih aplikacija u 2024–2025. još uvek koristi Core Data, a poznavanje Core Data-e je obavezno za rad na postojećim projektima. SwiftData je preporučeni sledeći korak nakon savladavanja Core Data.
+SwiftData je budućnost iOS persistencije. Međutim, većina produkcijskih aplikacija još uvek koristi Core Data, a poznavanje Core Data-e je obavezno za rad na postojećim projektima. SwiftData je preporučeni sledeći korak nakon savladavanja Core Data.
 
 # Reference
 

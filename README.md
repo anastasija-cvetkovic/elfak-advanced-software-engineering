@@ -1,6 +1,6 @@
 # <img src="Bookshelf/Resources/Assets.xcassets/AppIcon.appiconset/icon.png" alt="Trusty Bookshelf" width="32" height="32" /> Trusty Bookshelf
 
-Kreiranje iOS aplikacije sa offline-first arhitekturom koristeći Swift, SwiftUI i Core Data. Ključni koncepti, arhitekturalni obrasci i demonstracija otporne mobilne aplikacije.
+Kreiranje iOS aplikacije sa offline-first arhitekturom koristeći Swift, Apple-ov moderan programski jezik, i SwiftUI, deklarativni UI framework. Ključni koncepti, arhitekturalni obrasci i demonstracija otporne mobilne aplikacije koja funkcioniše i bez internet konekcije.
 
 [Šta je Offline-First?](#šta-je-offline-first) <br />
 [Ključne tehnologije](#ključne-tehnologije) <br />
@@ -13,8 +13,6 @@ Kreiranje iOS aplikacije sa offline-first arhitekturom koristeći Swift, SwiftUI
 [Pokretanje testova](#pokretanje-testova) <br />
 [Konkurentna rešenja](#konkurentna-rešenja) <br />
 [Reference](#reference) <br />
-
----
 
 # Šta je Offline-First?
 
@@ -60,7 +58,6 @@ func saveBook() {
 | **Brzina** | UI odgovara momentalno jer čita iz lokalnog SQLite-a, ne čeka API |
 | **Trajnost podataka** | Nijedno korisnikovo unošenje ne može biti izgubljeno zbog mrežne greške |
 
----
 # Ključne tehnologije
 
 ### SwiftUI i `@Observable` (iOS 17)
@@ -84,9 +81,9 @@ final class BooksViewModel {
 ### Core Data
 
 Apple-ov ORM (Object-Relational Mapper) iznad SQLite. Ključne komponente:
-- **`NSManagedObjectContext`** — unit-of-work pattern; atomske izmene; mora se koristiti na ispravnom thread-u
-- **`NSPersistentContainer`** — enkapsulacija celog stack-a
-- **`automaticallyMergesChangesFromParent`** — propagira pozadinske save-ove u UI kontekst
+* **`NSManagedObjectContext`** — unit-of-work pattern; atomske izmene; mora se koristiti na ispravnom thread-u<br />
+* **`NSPersistentContainer`** — enkapsulacija celog stack-a<br />
+* **`automaticallyMergesChangesFromParent`** — propagira pozadinske save-ove u UI kontekst<br />
 
 ### Network.framework — `NWPathMonitor`
 
@@ -118,11 +115,9 @@ actor APIService {
 ### XcodeGen
 
 Generiše `.xcodeproj` iz čitljivog `project.yml` fajla. Prednosti:
-- `.xcodeproj` sadrži binarni `.pbxproj` — git diff-ovi su nečitljivi
-- `project.yml` je 60 linija YAML-a — lak za pregled i merge
-- Svako ko klonira repo može odmah da generiše projekat: `xcodegen generate`
-
----
+* `.xcodeproj` sadrži binarni `.pbxproj` — git diff-ovi su nečitljivi<br />
+* `project.yml` je 60 linija YAML-a — lak za pregled i merge<br />
+* Svako ko klonira repo može odmah da generiše projekat: `xcodegen generate`<br />
 
 # Arhitektura aplikacije
 
@@ -191,8 +186,6 @@ lazy var backgroundContext: NSManagedObjectContext = {
 container.viewContext.automaticallyMergesChangesFromParent = true
 ```
 
----
-
 # Core Data model
 
 ### Atributi `BookEntity`
@@ -228,8 +221,6 @@ SyncStatus(rawValue: entity.syncStatus ?? "pending") ?? .pending
 ### Zašto `id` generiše uređaj?
 
 Ako bi `id` dodeljivao server, ne bismo mogli kreirati rekord dok smo offline. UUID-ovi generisani na uređaju rešavaju ovaj problem — rekord postoji lokalno odmah, a server prihvata UUID kao strani ključ.
-
----
 
 # Životni ciklus sinhronizacije
 
@@ -288,24 +279,20 @@ Ako bi `id` dodeljivao server, ne bismo mogli kreirati rekord dok smo offline. U
              └──────────┘             └────────────┘
 ```
 
----
-
 # Prednosti i mane
 
 ### Prednosti:
-* **Otpornost na gubitak mreže:** korisnikova akcija nikad ne može biti izgubljena zbog nestabilne mreže.
-* **Momentalni UI odgovor:** aplikacija čita iz lokalnog SQLite-a — nema čekanja na API.
-* **Transparentnost stanja:** svaka knjiga ima vidljiv sync status (pending / synced / failed).
-* **Testabilnost:** domain model (`Book` struct) ne zavisi od Core Data, što olakšava unit testove sa in-memory store-om.
-* **Kontrola:** za razliku od CloudKit ili Firebase, svaki korak sinhronizacije je eksplicitan i vidljiv u kodu.
+* **Otpornost na gubitak mreže:** korisnikova akcija nikad ne može biti izgubljena zbog nestabilne mreže.<br />
+* **Momentalni UI odgovor:** aplikacija čita iz lokalnog SQLite-a — nema čekanja na API.<br />
+* **Transparentnost stanja:** svaka knjiga ima vidljiv sync status (pending / synced / failed).<br />
+* **Testabilnost:** domain model (`Book` struct) ne zavisi od Core Data, što olakšava unit testove sa in-memory store-om.<br />
+* **Kontrola:** za razliku od CloudKit ili Firebase, svaki korak sinhronizacije je eksplicitan i vidljiv u kodu.<br />
 
 ### Mane:
-* **Kompleksnost implementacije:** potrebno je ručno upravljati sync redom čekanja, retry logikom i merge strategijama.
-* **Rešavanje konflikta:** višekorisnički scenariji zahtevaju sofisticiranije strategije (CRDT, Operational Transformation). Ovaj projekat koristi Last-Write-Wins.
-* **Dupliranje modela:** `Book` struct i `BookEntity` predstavljaju iste podatke — svaka promena šeme zahteva izmene na oba mesta.
-* **Core Data kriva učenja:** `NSManagedObjectContext`, thread-safety i merge policy-ji zahtevaju razumevanje pre nego što se greške mogu efikasno dijagnostikovati.
-
----
+* **Kompleksnost implementacije:** potrebno je ručno upravljati sync redom čekanja, retry logikom i merge strategijama.<br />
+* **Rešavanje konflikta:** višekorisnički scenariji zahtevaju sofisticiranije strategije (CRDT, Operational Transformation). Ovaj projekat koristi Last-Write-Wins.<br />
+* **Dupliranje modela:** `Book` struct i `BookEntity` predstavljaju iste podatke — svaka promena šeme zahteva izmene na oba mesta.<br />
+* **Core Data kriva učenja:** `NSManagedObjectContext`, thread-safety i merge policy-ji zahtevaju razumevanje pre nego što se greške mogu efikasno dijagnostikovati.<br />
 
 # Preduslovi
 
@@ -333,13 +320,11 @@ brew --version
 brew install xcodegen
 ```
 
----
-
 # Kreiranje projekta od nule
 
 Ovaj odeljak demonstrira kako se gradi offline-first iOS aplikacija korak po korak.
 
-## 1. Postavljanje projekta sa XcodeGen
+**1. Postavljanje projekta sa XcodeGen**
 
 Umesto ručnog kreiranja `.xcodeproj` u Xcode-u, koristimo XcodeGen koji generiše projekat iz YAML konfiguracije.
 
@@ -379,7 +364,7 @@ xcodegen generate
 open "Trusty Bookshelf.xcodeproj"
 ```
 
-## 2. Core Data model
+**2. Core Data model**
 
 U Xcode-u kreirajte novi **Data Model** fajl (`Bookshelf.xcdatamodeld`) i dodajte entitet `BookEntity` sa sledećim atributima:
 
@@ -396,7 +381,7 @@ U Xcode-u kreirajte novi **Data Model** fajl (`Bookshelf.xcdatamodeld`) i dodajt
 | `createdAt` | Date | Ne |
 | `updatedAt` | Date | Ne |
 
-## 3. `PersistenceController` — Core Data stack
+**3. `PersistenceController` — Core Data stack**
 
 Kreirajte `CoreData/PersistenceController.swift`:
 
@@ -439,7 +424,7 @@ final class PersistenceController {
 
 > **Napomena:** `inMemory: true` parametar se koristi isključivo u testovima — podaci se čuvaju u RAM-u i brišu se na kraju testa.
 
-## 4. Domain model — `Book` struct
+**4. Domain model — `Book` struct**
 
 Kreirajte `Models/Book.swift`. Views i ViewModels rade isključivo sa ovim struct-om, nikad direktno sa Core Data entitetom:
 
@@ -499,7 +484,7 @@ enum SyncStatus: String {
 }
 ```
 
-## 5. Konverzija entiteta — `BookEntity+Extensions`
+**5. Konverzija entiteta — `BookEntity+Extensions`**
 
 Kreirajte `CoreData/BookEntity+Extensions.swift` koji premošćuje Core Data entitet i domain model:
 
@@ -537,7 +522,7 @@ extension BookEntity {
 }
 ```
 
-## 6. `NetworkMonitor` — praćenje mreže
+**6. `NetworkMonitor` — praćenje mreže**
 
 Kreirajte `Services/NetworkMonitor.swift`:
 
@@ -572,7 +557,7 @@ final class NetworkMonitor {
 
 > **Zašto `simulateOffline`, a ne Airplane Mode?** Airplane Mode prekida Xcode wireless debugging sesiju. Ovaj toggle čuva WiFi konekciju aktivnom ali čini da aplikacija veruje da je offline.
 
-## 7. `APIService` — HTTP klijent
+**7. `APIService` — HTTP klijent**
 
 Kreirajte `Services/APIService.swift`. Koristimo `actor` za kompajler-garantovanu thread safety:
 
@@ -611,7 +596,7 @@ actor APIService {
 }
 ```
 
-## 8. `SyncService` — srce offline-first arhitekture
+**8. `SyncService` — srce offline-first arhitekture**
 
 Kreirajte `Services/SyncService.swift`. Ovo je najvažniji deo projekta:
 
@@ -692,7 +677,7 @@ final class SyncService {
 }
 ```
 
-## 9. `BooksViewModel` — jedini ViewModel
+**9. `BooksViewModel` — jedini ViewModel**
 
 Kreirajte `ViewModels/BooksViewModel.swift`:
 
@@ -779,7 +764,7 @@ final class BooksViewModel {
 }
 ```
 
-## 10. SwiftUI Views
+**10. SwiftUI Views**
 
 ### `BookListView` — glavni ekran
 
@@ -845,7 +830,7 @@ struct BookRowView: View {
 }
 ```
 
-## 11. App Entry Point
+**11. App Entry Point**
 
 Kreirajte `BookshelfApp.swift`:
 
@@ -865,7 +850,7 @@ struct BookshelfApp: App {
 }
 ```
 
-## 12. Pokretanje aplikacije
+**12. Pokretanje aplikacije**
 
 ```bash
 # Generišite projekat i pokrenite u Xcode-u
@@ -879,8 +864,6 @@ U Xcode-u:
 3. Nema API ključeva, nema naloga, nema dodatne konfiguracije
 
 > **JSONPlaceholder:** Sva HTTP komunikacija ide ka `jsonplaceholder.typicode.com`. Ova API uvek odgovara sa HTTP 200/201 ali ne perzistuje podatke — idealno za edukativne demonstracije.
-
----
 
 # Pokretanje testova
 
@@ -912,21 +895,19 @@ xcodebuild test \
 Testovi koriste `PersistenceController(inMemory: true)` — Core Data čuva podatke isključivo u RAM-u, bez uticaja na disk. `SyncServiceTests` koristi `MockAPIService` za simulaciju mrežnih odgovora bez stvarnih HTTP poziva.
 
 **`BooksViewModelTests`** — CRUD operacije i offline ponašanje:
-- `test_addBook_createsRecord` — kreiranje knjige pravi rekord u Core Data
-- `test_addBook_whileOffline_isPending` — knjiga kreirana offline dobija `.pending` status
-- `test_deleteBook_removesFromStore` — brisanje uklanja rekord
-- `test_updateBook_marksPending` — izmena synced knjige resetuje status na `.pending`
-- `test_fetchBooks_sortedNewestFirst` — sortiranje po datumu kreiranja (najnovije prvo)
+- `test_addBook_createsRecord` — kreiranje knjige pravi rekord u Core Data<br />
+- `test_addBook_whileOffline_isPending` — knjiga kreirana offline dobija `.pending` status<br />
+- `test_deleteBook_removesFromStore` — brisanje uklanja rekord<br />
+- `test_updateBook_marksPending` — izmena synced knjige resetuje status na `.pending`<br />
+- `test_fetchBooks_sortedNewestFirst` — sortiranje po datumu kreiranja (najnovije prvo)<br />
 
 **`SyncServiceTests`** — sync logika, retry i deduplicija:
-- `test_syncPendingBooks_syncsAllPending` — sve pending knjige postaju synced
-- `test_newBook_usesCreate` — nova knjiga (remoteId=0) poziva POST
-- `test_existingBook_usesUpdate` — knjiga sa remoteId poziva PUT
-- `test_syncPendingBooks_onNetworkError_marksFailed` — mrežna greška → failed status
-- `test_failedBooks_areRetried` — failed knjige ulaze u sledeći sync pokušaj
-- `test_concurrentSyncCalls_doNotDuplicate` — dupli pozivi ne rezultuju duplikatima
-
----
+- `test_syncPendingBooks_syncsAllPending` — sve pending knjige postaju synced<br />
+- `test_newBook_usesCreate` — nova knjiga (remoteId=0) poziva POST<br />
+- `test_existingBook_usesUpdate` — knjiga sa remoteId poziva PUT<br />
+- `test_syncPendingBooks_onNetworkError_marksFailed` — mrežna greška → failed status<br />
+- `test_failedBooks_areRetried` — failed knjige ulaze u sledeći sync pokušaj<br />
+- `test_concurrentSyncCalls_doNotDuplicate` — dupli pozivi ne rezultuju duplikatima<br />
 
 # Konkurentna rešenja
 
@@ -940,32 +921,26 @@ Testovi koriste `PersistenceController(inMemory: true)` — Core Data čuva poda
 
 ### Zašto Core Data + Custom Sync za ovaj tutorijal?
 
-1. **Edukativno** — svaki korak je vidljiv i eksplicitan; nema crnih kutija
-2. **Bez vendor lock-in** — CloudKit zahteva Apple uređaje, Firebase zahteva Google nalog
-3. **Industrijski standard** — Core Data je prisutan u većini postojećih iOS projekata
-4. **Demonstrira fundamentalni problem** — umesto da ga sakrije automatizacijom
+1. **Edukativno** — svaki korak je vidljiv i eksplicitan; nema crnih kutija<br />
+2. **Bez vendor lock-in** — CloudKit zahteva Apple uređaje, Firebase zahteva Google nalog<br />
+3. **Industrijski standard** — Core Data je prisutan u većini postojećih iOS projekata<br />
+4. **Demonstrira fundamentalni problem** — umesto da ga sakrije automatizacijom<br />
 
 ### Zašto ne SwiftData (iOS 17)?
 
 SwiftData je budućnost iOS persistencije. Međutim, većina produkcijskih aplikacija u 2024–2025. još uvek koristi Core Data, a poznavanje Core Data-e je obavezno za rad na postojećim projektima. SwiftData je preporučeni sledeći korak nakon savladavanja Core Data.
 
----
-
 # Reference
 
-1. [Apple Developer Documentation — Core Data](https://developer.apple.com/documentation/coredata)
-2. [Apple Developer Documentation — Observation Framework](https://developer.apple.com/documentation/observation)
-3. [Apple Developer Documentation — NWPathMonitor](https://developer.apple.com/documentation/network/nwpathmonitor)
-4. [WWDC 2023 — Discover Observation in SwiftUI (Session 10149)](https://developer.apple.com/videos/play/wwdc2023/10149/)
-5. [WWDC 2021 — Bring Core Data concurrency to Swift and SwiftUI (Session 10017)](https://developer.apple.com/videos/play/wwdc2021/10017/)
-6. [WWDC 2021 — Swift concurrency: Behind the scenes (Session 10254)](https://developer.apple.com/videos/play/wwdc2021/10254/)
-7. [JSONPlaceholder — Free Fake REST API](https://jsonplaceholder.typicode.com)
-8. [XcodeGen — GitHub](https://github.com/yonaskolb/XcodeGen)
-9. Kleppmann, M. (2017). *Designing Data-Intensive Applications*. O'Reilly.
-10. [Offline First — offlinefirst.org](http://offlinefirst.org)
-11. [Swift Evolution — Actors (SE-0306)](https://github.com/apple/swift-evolution/blob/main/proposals/0306-actors.md)
-12. [Swift Evolution — Observation (SE-0395)](https://github.com/apple/swift-evolution/blob/main/proposals/0395-observability.md)
-
----
-
-*ELFAK — Napredno softversko inženjerstvo · 2026*
+1. [Apple Developer Documentation — Core Data](https://developer.apple.com/documentation/coredata)<br />
+2. [Apple Developer Documentation — Observation Framework](https://developer.apple.com/documentation/observation)<br />
+3. [Apple Developer Documentation — NWPathMonitor](https://developer.apple.com/documentation/network/nwpathmonitor)<br />
+4. [WWDC 2023 — Discover Observation in SwiftUI (Session 10149)](https://developer.apple.com/videos/play/wwdc2023/10149/)<br />
+5. [WWDC 2021 — Bring Core Data concurrency to Swift and SwiftUI (Session 10017)](https://developer.apple.com/videos/play/wwdc2021/10017/)<br />
+6. [WWDC 2021 — Swift concurrency: Behind the scenes (Session 10254)](https://developer.apple.com/videos/play/wwdc2021/10254/)<br />
+7. [JSONPlaceholder — Free Fake REST API](https://jsonplaceholder.typicode.com)<br />
+8. [XcodeGen — GitHub](https://github.com/yonaskolb/XcodeGen)<br />
+9. Kleppmann, M. (2017). *Designing Data-Intensive Applications*. O'Reilly.<br />
+10. [Offline First — offlinefirst.org](http://offlinefirst.org)<br />
+11. [Swift Evolution — Actors (SE-0306)](https://github.com/apple/swift-evolution/blob/main/proposals/0306-actors.md)<br />
+12. [Swift Evolution — Observation (SE-0395)](https://github.com/apple/swift-evolution/blob/main/proposals/0395-observability.md)<br />

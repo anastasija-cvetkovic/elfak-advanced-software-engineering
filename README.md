@@ -1,5 +1,11 @@
 # <img src="Bookshelf/Resources/Assets.xcassets/AppIcon.appiconset/icon.png" alt="Trusty Bookshelf" width="32" height="32" /> Trusty Bookshelf
 
+[![Swift 5.9](https://img.shields.io/badge/Swift-5.9-FA7343?logo=swift)](https://swift.org)
+[![iOS 17.0+](https://img.shields.io/badge/iOS-17.0+-000000?logo=apple)](https://developer.apple.com/ios/)
+[![Xcode 15+](https://img.shields.io/badge/Xcode-15+-147EFB?logo=xcode)](https://developer.apple.com/xcode/)
+[![SwiftUI](https://img.shields.io/badge/SwiftUI-2.0-007AFF?logo=swift)](https://developer.apple.com/xcode/swiftui/)
+[![ELFAK](https://img.shields.io/badge/ELFAK-Advanced%20SE-8B0000)](https://www.elfak.ni.ac.rs/)
+
 Kreiranje iOS aplikacije sa offline-first arhitekturom koristeći Swift, Apple-ov moderan programski jezik, i SwiftUI, deklarativni UI framework. Ključni koncepti, arhitekturalni obrasci i demonstracija otporne mobilne aplikacije koja funkcioniše i bez internet konekcije.
 
 - [Brzi start](#brzi-start)

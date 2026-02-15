@@ -1,4 +1,4 @@
-# Trusty Bookshelf
+# <img src="Bookshelf/Resources/Assets.xcassets/AppIcon.appiconset/icon.png" alt="Trusty Bookshelf" width="32" height="32" /> Trusty Bookshelf
 
 Kreiranje iOS aplikacije sa offline-first arhitekturom koristeći Swift, SwiftUI i Core Data. Ključni koncepti, arhitekturalni obrasci i demonstracija otporne mobilne aplikacije.
 

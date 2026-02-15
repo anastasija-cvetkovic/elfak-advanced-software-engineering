@@ -2,6 +2,7 @@
 
 Kreiranje iOS aplikacije sa offline-first arhitekturom koristeći Swift, Apple-ov moderan programski jezik, i SwiftUI, deklarativni UI framework. Ključni koncepti, arhitekturalni obrasci i demonstracija otporne mobilne aplikacije koja funkcioniše i bez internet konekcije.
 
+[Brzi start](#brzi-start) <br />
 [Šta je Offline-First?](#šta-je-offline-first) <br />
 [Ključne tehnologije](#ključne-tehnologije) <br />
 [Arhitektura aplikacije](#arhitektura-aplikacije) <br />
@@ -13,6 +14,25 @@ Kreiranje iOS aplikacije sa offline-first arhitekturom koristeći Swift, Apple-o
 [Pokretanje testova](#pokretanje-testova) <br />
 [Konkurentna rešenja](#konkurentna-rešenja) <br />
 [Reference](#reference) <br />
+
+# Brzi start
+
+Ako si već upoznat sa Swift/iOS razvojem i samo želiš da pokreneš projekat:
+
+```bash
+git clone https://github.com/anastasija-vucic/elfak-advanced-software-engineering.git
+cd elfak-advanced-software-engineering
+brew install xcodegen
+xcodegen generate
+open "Trusty Bookshelf.xcodeproj"
+```
+
+U Xcode-u:
+1. Iz toolbar-a izaberi **iPhone simulator** (iPhone 15, iOS 17+)
+2. Pritisni **Cmd + R** za build i pokretanje
+3. Nema API ključeva, nema naloga, nema dodatne konfiguracije
+
+> Za detaljna uputstva pogledaj sekciju [Preduslovi](#preduslovi) i [Kreiranje projekta od nule](#kreiranje-projekta-od-nule).
 
 # Šta je Offline-First?
 

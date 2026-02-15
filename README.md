@@ -145,17 +145,21 @@ flowchart TB
 
 Views i ViewModels nikad ne uvoze `CoreData` — rade isključivo sa `Book` struct-om:
 
-```
-BookEntity (NSManagedObject)      Book (Swift struct)
-─────────────────────────         ────────────────────
-Živi u Core Data kontekstu        Čisti Swift value type
-Nije thread-safe                  Thread-safe (struct je kopiran)
-Testira se teže                   Testira se bez Core Data
-
-       BookEntity+Extensions.swift
-       ─────────────────────────
-       entity.toDomainModel() → Book
-       entity.update(from: book)
+```mermaid
+flowchart LR
+    subgraph left["BookEntity (NSManagedObject)"]
+      BE["Živi u Core Data kontekstu<br>Nije thread-safe<br>Testira se teže"]
+    end
+    subgraph right["Book (Swift struct)"]
+      BS["Čisti Swift value type<br>Thread-safe (struct je kopiran)<br>Testira se bez Core Data"]
+    end
+    subgraph ext["BookEntity+Extensions.swift"]
+      EXT["entity.toDomainModel() → Book<br>entity.update(from: book)"]
+    end
+    left -- "toDomainModel()" --> right
+    right -- "update(from: book)" --> left
+    left -.-> EXT
+    right -.-> EXT
 ```
 
 ### Dve Core Data kontekste

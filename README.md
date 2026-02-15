@@ -62,7 +62,7 @@ func saveBook() {
 
 ### SwiftUI i `@Observable` (iOS 17)
 
-SwiftUI je Apple-ov deklarativni UI framework. `@Observable` makro (Observation framework, iOS 17) zamenjuje stariji `ObservableObject` + `@Published` pattern. Automatski prati koje su property-je view pročitao i re-renduje samo taj view kada se vrednost promeni.
+SwiftUI je Apple-ov deklarativni UI framework. `@Observable` makro (Observation framework, iOS 17) zamenjuje stariji `ObservableObject` + `@Published` pattern. Automatski prati koje properties view koristi i ponovo ga renderuje samo kada se njihova vrednost promeni.
 
 ```swift
 // iOS 16 — ObservableObject + @Published
@@ -74,7 +74,7 @@ class BooksViewModel: ObservableObject {
 // iOS 17 — @Observable (granularno, bez boilerplate-a)
 @Observable
 final class BooksViewModel {
-    var books: [Book] = []  // Automatski instrumentirano
+    var books: [Book] = []  // @Observable makro preuzima praćenje promena
 }
 ```
 

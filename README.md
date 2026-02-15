@@ -218,24 +218,29 @@ Ako bi `id` dodeljivao server, ne bismo mogli kreirati rekord dok smo offline. U
 
 ```mermaid
 flowchart TD
-    A["**1. Korisnik kreira/menja knjigu**"]
-    B["**2. Core Data save**<br/>(syncStatus = \"pending\", remoteId = 0)<br/>Ovo je UVEK uspešno — ne zavisi od mreže"]
-    C["**3. BooksViewModel proverava:**<br/>effectivelyOnline?"]
+    A["1. Korisnik kreira/menja knjigu"]
+    B["2. Core Data save\n(syncStatus = 'pending', remoteId = 0)\nOvo je UVEK uspešno — ne zavisi od mreže"]
+    C["3. BooksViewModel proverava:\neffectivelyOnline?"]
+    D["Knjiga čeka u lokalnoj bazi\n(syncStatus = 'pending')"]
+    E["4. SyncService.syncPendingBooks()\nFetch svih 'pending' i 'failed'\nZa svaku knjigu:"]
+    F{"remoteId == 0?"}
+    G["POST\n/posts"]
+    H["PUT\n/posts/{id}"]
+    I{"HTTP 201/200?"}
+    J["syncStatus = 'synced'\nremoteId = server_id"]
+    K["Mrežna greška\nsyncStatus = 'failed'\n(Uključiće se u sledeći poziv syncPendingBooks)"]
 
-    A --> B --> C
-
-    C -->|DA| D["**4. SyncService.syncPendingBooks()**<br/>Fetch svih \"pending\" i \"failed\" knjiga<br/>Za svaku knjigu:"]
-    C -->|NE| E["Knjiga čeka u lokalnoj bazi<br/>(syncStatus=\"pending\")"]
-
-    D --> F{"remoteId == 0?"}
-    F -->|DA| G["POST<br/>/posts"]
-    F -->|NE| H["PUT<br/>/posts/{id}"]
-
-    G --> I{"HTTP 201/200 ?"}
+    A --> B
+    B --> C
+    C -- "DA" --> E
+    C -- "NE" --> D
+    E --> F
+    F -- "DA" --> G
+    F -- "NE" --> H
+    G --> I
     H --> I
-
-    I -->|DA| J["syncStatus = \"synced\"<br/>remoteId = server_id"]
-    I -->|NE| K["Mrežna greška<br/>syncStatus = \"failed\"<br/>(Uključiće se u sledeći syncPendingBooks)"]
+    I -- "DA" --> J
+    I -- "NE" --> K
 ```
 
 ### Mašina stanja `SyncStatus`

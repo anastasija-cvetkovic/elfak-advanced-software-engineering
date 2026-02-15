@@ -122,10 +122,6 @@ Generiše `.xcodeproj` iz čitljivog `project.yml` fajla. Prednosti:
 # Arhitektura aplikacije
 
 ```mermaid
----
-config:
-  layout: elk
----
 flowchart TB
  subgraph VIEWS["SwiftUI Views"]
         V1["BookListView"]

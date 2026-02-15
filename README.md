@@ -2,18 +2,20 @@
 
 Kreiranje iOS aplikacije sa offline-first arhitekturom koristeći Swift, Apple-ov moderan programski jezik, i SwiftUI, deklarativni UI framework. Ključni koncepti, arhitekturalni obrasci i demonstracija otporne mobilne aplikacije koja funkcioniše i bez internet konekcije.
 
-[Brzi start](#brzi-start) <br />
-[Šta je Offline-First?](#šta-je-offline-first) <br />
-[Ključne tehnologije](#ključne-tehnologije) <br />
-[Arhitektura aplikacije](#arhitektura-aplikacije) <br />
-[Core Data model](#core-data-model) <br />
-[Životni ciklus sinhronizacije](#životni-ciklus-sinhronizacije) <br />
-[Prednosti i mane](#prednosti-i-mane) <br />
-[Preduslovi](#preduslovi) <br />
-[Kreiranje projekta od nule](#kreiranje-projekta-od-nule) <br />
-[Pokretanje testova](#pokretanje-testova) <br />
-[Konkurentna rešenja](#konkurentna-rešenja) <br />
-[Reference](#reference) <br />
+- [Brzi start](#brzi-start)
+- [Šta je Offline-First?](#šta-je-offline-first)
+- [Ključne tehnologije](#ključne-tehnologije)
+- [Struktura projekta](#struktura-projekta)
+- [Arhitektura aplikacije](#arhitektura-aplikacije)
+- [Core Data model](#core-data-model)
+- [Životni ciklus sinhronizacije](#životni-ciklus-sinhronizacije)
+- [Prednosti i mane](#prednosti-i-mane)
+- [Preduslovi](#preduslovi)
+- [Kreiranje projekta od nule](#kreiranje-projekta-od-nule)
+- [Pokretanje testova](#pokretanje-testova)
+- [Česti problemi](#česti-problemi)
+- [Konkurentna rešenja](#konkurentna-rešenja)
+- [Reference](#reference)
 
 # Brzi start
 
@@ -101,9 +103,9 @@ final class BooksViewModel {
 ### Core Data
 
 Apple-ov ORM (Object-Relational Mapper) iznad SQLite. Ključne komponente:
-* **`NSManagedObjectContext`**  -  unit-of-work pattern; atomske izmene; mora se koristiti na ispravnom thread-u<br />
-* **`NSPersistentContainer`**  -  enkapsulacija celog stack-a<br />
-* **`automaticallyMergesChangesFromParent`**  -  propagira pozadinske save-ove u UI kontekst<br />
+* **`NSManagedObjectContext`**  -  unit-of-work pattern; atomske izmene; mora se koristiti na ispravnom thread-u
+* **`NSPersistentContainer`**  -  enkapsulacija celog stack-a
+* **`automaticallyMergesChangesFromParent`**  -  propagira pozadinske save-ove u UI kontekst
 
 ### Network.framework  -  `NWPathMonitor`
 
@@ -135,9 +137,44 @@ actor APIService {
 ### XcodeGen
 
 Generiše `.xcodeproj` iz čitljivog `project.yml` fajla. Prednosti:
-* `.xcodeproj` sadrži binarni `.pbxproj`  -  git diff-ovi su nečitljivi<br />
-* `project.yml` je 60 linija YAML-a  -  lak za pregled i merge<br />
-* Svako ko klonira repo može odmah da generiše projekat: `xcodegen generate`<br />
+* `.xcodeproj` sadrži binarni `.pbxproj`  -  git diff-ovi su nečitljivi
+* `project.yml` je 60 linija YAML-a  -  lak za pregled i merge
+* Svako ko klonira repo može odmah da generiše projekat: `xcodegen generate`
+
+# Struktura projekta
+
+```
+elfak-advanced-software-engineering/
+├── Bookshelf/                          # Izvorni kod aplikacije
+│   ├── BookshelfApp.swift              # @main entry point
+│   ├── ContentView.swift               # Root view
+│   ├── Models/
+│   │   ├── Book.swift                  # Domain model (Swift struct, bez Core Data zavisnosti)
+│   │   └── SyncStatus.swift            # Enum: pending / synced / failed
+│   ├── CoreData/
+│   │   ├── Bookshelf.xcdatamodeld      # Core Data šema (BookEntity)
+│   │   ├── PersistenceController.swift # NSPersistentContainer, viewContext, backgroundContext
+│   │   └── BookEntity+Extensions.swift # Konverzija: entity.toDomainModel() / entity.update(from:)
+│   ├── Services/
+│   │   ├── NetworkMonitor.swift        # NWPathMonitor wrapper (@Observable)
+│   │   ├── APIService.swift            # HTTP klijent za JSONPlaceholder (actor)
+│   │   └── SyncService.swift           # Sync logika, retry, sync log (@Observable)
+│   ├── ViewModels/
+│   │   └── BooksViewModel.swift        # Jedini ViewModel; CRUD + network observing (@Observable)
+│   ├── Views/
+│   │   ├── BookListView.swift          # Glavni ekran sa listom knjiga
+│   │   ├── BookRowView.swift           # Red sa naslovom, autorom i sync ikonom
+│   │   ├── AddEditBookView.swift       # Forma za dodavanje i izmenu knjige
+│   │   ├── NetworkBannerView.swift     # Crveni baner kada nema konekcije
+│   │   └── SyncLogView.swift           # Real-time log sync operacija
+│   └── Resources/
+│       └── Assets.xcassets             # App ikona i slike
+├── BookshelfTests/                     # Unit testovi
+│   ├── BooksViewModelTests.swift       # CRUD i offline ponašanje (9 testova)
+│   └── SyncServiceTests.swift          # Sync logika, retry, deduplicija (12 testova)
+├── project.yml                         # XcodeGen konfiguracija
+└── README.md
+```
 
 # Arhitektura aplikacije
 
@@ -283,17 +320,17 @@ flowchart TB
 # Prednosti i mane
 
 ### Prednosti:
-* **Otpornost na gubitak mreže:** korisnikova akcija nikad ne može biti izgubljena zbog nestabilne mreže.<br />
-* **Momentalni UI odgovor:** aplikacija čita iz lokalnog SQLite-a  -  nema čekanja na API.<br />
-* **Transparentnost stanja:** svaka knjiga ima vidljiv sync status (pending / synced / failed).<br />
-* **Testabilnost:** domain model (`Book` struct) ne zavisi od Core Data, što olakšava unit testove sa in-memory store-om.<br />
-* **Kontrola:** za razliku od CloudKit ili Firebase, svaki korak sinhronizacije je eksplicitan i vidljiv u kodu.<br />
+* **Otpornost na gubitak mreže:** korisnikova akcija nikad ne može biti izgubljena zbog nestabilne mreže.
+* **Momentalni UI odgovor:** aplikacija čita iz lokalnog SQLite-a  -  nema čekanja na API.
+* **Transparentnost stanja:** svaka knjiga ima vidljiv sync status (pending / synced / failed).
+* **Testabilnost:** domain model (`Book` struct) ne zavisi od Core Data, što olakšava unit testove sa in-memory store-om.
+* **Kontrola:** za razliku od CloudKit ili Firebase, svaki korak sinhronizacije je eksplicitan i vidljiv u kodu.
 
 ### Mane:
-* **Kompleksnost implementacije:** potrebno je ručno upravljati sync redom čekanja, retry logikom i merge strategijama.<br />
-* **Rešavanje konflikta:** višekorisnički scenariji zahtevaju sofisticiranije strategije (CRDT, Operational Transformation). Ovaj projekat koristi Last-Write-Wins.<br />
-* **Dupliranje modela:** `Book` struct i `BookEntity` predstavljaju iste podatke  -  svaka promena šeme zahteva izmene na oba mesta.<br />
-* **Core Data kriva učenja:** `NSManagedObjectContext`, thread-safety i merge policy-ji zahtevaju razumevanje pre nego što se greške mogu efikasno dijagnostikovati.<br />
+* **Kompleksnost implementacije:** potrebno je ručno upravljati sync redom čekanja, retry logikom i merge strategijama.
+* **Rešavanje konflikta:** višekorisnički scenariji zahtevaju sofisticiranije strategije (CRDT, Operational Transformation). Ovaj projekat koristi Last-Write-Wins.
+* **Dupliranje modela:** `Book` struct i `BookEntity` predstavljaju iste podatke  -  svaka promena šeme zahteva izmene na oba mesta.
+* **Core Data kriva učenja:** `NSManagedObjectContext`, thread-safety i merge policy-ji zahtevaju razumevanje pre nego što se greške mogu efikasno dijagnostikovati.
 
 # Preduslovi
 
@@ -896,19 +933,77 @@ xcodebuild test \
 Testovi koriste `PersistenceController(inMemory: true)`  -  Core Data čuva podatke isključivo u RAM-u, bez uticaja na disk. `SyncServiceTests` koristi `MockAPIService` za simulaciju mrežnih odgovora bez stvarnih HTTP poziva.
 
 **`BooksViewModelTests`**  -  CRUD operacije i offline ponašanje:
-- `test_addBook_createsRecord`  -  kreiranje knjige pravi rekord u Core Data<br />
-- `test_addBook_whileOffline_isPending`  -  knjiga kreirana offline dobija `.pending` status<br />
-- `test_deleteBook_removesFromStore`  -  brisanje uklanja rekord<br />
-- `test_updateBook_marksPending`  -  izmena synced knjige resetuje status na `.pending`<br />
-- `test_fetchBooks_sortedNewestFirst`  -  sortiranje po datumu kreiranja (najnovije prvo)<br />
+- `test_addBook_createsRecord`  -  kreiranje knjige pravi rekord u Core Data
+- `test_addBook_whileOffline_isPending`  -  knjiga kreirana offline dobija `.pending` status
+- `test_deleteBook_removesFromStore`  -  brisanje uklanja rekord
+- `test_updateBook_marksPending`  -  izmena synced knjige resetuje status na `.pending`
+- `test_fetchBooks_sortedNewestFirst`  -  sortiranje po datumu kreiranja (najnovije prvo)
 
 **`SyncServiceTests`**  -  sync logika, retry i deduplicija:
-- `test_syncPendingBooks_syncsAllPending`  -  sve pending knjige postaju synced<br />
-- `test_newBook_usesCreate`  -  nova knjiga (remoteId=0) poziva POST<br />
-- `test_existingBook_usesUpdate`  -  knjiga sa remoteId poziva PUT<br />
-- `test_syncPendingBooks_onNetworkError_marksFailed`  -  mrežna greška → failed status<br />
-- `test_failedBooks_areRetried`  -  failed knjige ulaze u sledeći sync pokušaj<br />
-- `test_concurrentSyncCalls_doNotDuplicate`  -  dupli pozivi ne rezultuju duplikatima<br />
+- `test_syncPendingBooks_syncsAllPending`  -  sve pending knjige postaju synced
+- `test_newBook_usesCreate`  -  nova knjiga (remoteId=0) poziva POST
+- `test_existingBook_usesUpdate`  -  knjiga sa remoteId poziva PUT
+- `test_syncPendingBooks_onNetworkError_marksFailed`  -  mrežna greška → failed status
+- `test_failedBooks_areRetried`  -  failed knjige ulaze u sledeći sync pokušaj
+- `test_concurrentSyncCalls_doNotDuplicate`  -  dupli pozivi ne rezultuju duplikatima
+
+# Česti problemi
+
+### `xcodegen: command not found`
+
+XcodeGen nije instaliran. Instaliraj ga putem Homebrew-a:
+
+```bash
+brew install xcodegen
+```
+
+Ako Homebrew nije instaliran, prvo poseti [brew.sh](https://brew.sh).
+
+---
+
+### `open "Trusty Bookshelf.xcodeproj"` vraća grešku
+
+`.xcodeproj` fajl se ne nalazi u repozitorijumu - mora se generisati. Pokreni:
+
+```bash
+xcodegen generate
+```
+
+---
+
+### Build greška: `Requires iOS 17.0 or later`
+
+Izabrani simulator koristi stariju verziju iOS-a. U Xcode toolbar-u izaberi simulator sa iOS 17.0 ili novijim (npr. iPhone 15 - iOS 17.0).
+
+---
+
+### Simulator nije dostupan u listi
+
+Potrebno je preuzeti iOS 17 runtime. U Xcode-u:
+
+```
+Xcode > Settings > Platforms > iOS 17.x > Get
+```
+
+---
+
+### Testovi ne prolaze: `No such module 'CoreData'`
+
+Projekat nije pravilno generisan ili linkovan. Pokušaj:
+
+```bash
+xcodegen generate
+```
+
+Zatim u Xcode-u: **Product > Clean Build Folder** (`Shift + Cmd + K`), pa ponovo pokreni testove (`Cmd + U`).
+
+---
+
+### Knjige ostaju na `pending` statusu
+
+JSONPlaceholder API je dostupan samo preko HTTPS-a i zahteva internet konekciju. Proveri:
+* Da li je "Simulate Offline" toggle isključen u toolbar-u aplikacije
+* Da li simulator ima internet konekciju (probaj otvoriti Safari u simulatoru)
 
 # Konkurentna rešenja
 
@@ -922,10 +1017,10 @@ Testovi koriste `PersistenceController(inMemory: true)`  -  Core Data čuva poda
 
 ### Zašto Core Data + Custom Sync za ovaj tutorijal?
 
-1. **Edukativno**  -  svaki korak je vidljiv i eksplicitan; nema crnih kutija<br />
-2. **Bez vendor lock-in**  -  CloudKit zahteva Apple uređaje, Firebase zahteva Google nalog<br />
-3. **Industrijski standard**  -  Core Data je prisutan u većini postojećih iOS projekata<br />
-4. **Demonstrira fundamentalni problem**  -  umesto da ga sakrije automatizacijom<br />
+1. **Edukativno**  -  svaki korak je vidljiv i eksplicitan; nema crnih kutija
+2. **Bez vendor lock-in**  -  CloudKit zahteva Apple uređaje, Firebase zahteva Google nalog
+3. **Industrijski standard**  -  Core Data je prisutan u većini postojećih iOS projekata
+4. **Demonstrira fundamentalni problem**  -  umesto da ga sakrije automatizacijom
 
 ### Zašto ne SwiftData (iOS 17)?
 
@@ -933,15 +1028,15 @@ SwiftData je budućnost iOS persistencije. Međutim, većina produkcijskih aplik
 
 # Reference
 
-1. [Apple Developer Documentation  -  Core Data](https://developer.apple.com/documentation/coredata)<br />
-2. [Apple Developer Documentation  -  Observation Framework](https://developer.apple.com/documentation/observation)<br />
-3. [Apple Developer Documentation  -  NWPathMonitor](https://developer.apple.com/documentation/network/nwpathmonitor)<br />
-4. [WWDC 2023  -  Discover Observation in SwiftUI (Session 10149)](https://developer.apple.com/videos/play/wwdc2023/10149/)<br />
-5. [WWDC 2021  -  Bring Core Data concurrency to Swift and SwiftUI (Session 10017)](https://developer.apple.com/videos/play/wwdc2021/10017/)<br />
-6. [WWDC 2021  -  Swift concurrency: Behind the scenes (Session 10254)](https://developer.apple.com/videos/play/wwdc2021/10254/)<br />
-7. [JSONPlaceholder  -  Free Fake REST API](https://jsonplaceholder.typicode.com)<br />
-8. [XcodeGen  -  GitHub](https://github.com/yonaskolb/XcodeGen)<br />
-9. Kleppmann, M. (2017). *Designing Data-Intensive Applications*. O'Reilly.<br />
-10. [Offline First  -  offlinefirst.org](http://offlinefirst.org)<br />
-11. [Swift Evolution  -  Actors (SE-0306)](https://github.com/apple/swift-evolution/blob/main/proposals/0306-actors.md)<br />
-12. [Swift Evolution  -  Observation (SE-0395)](https://github.com/apple/swift-evolution/blob/main/proposals/0395-observability.md)<br />
+1. [Apple Developer Documentation  -  Core Data](https://developer.apple.com/documentation/coredata)
+2. [Apple Developer Documentation  -  Observation Framework](https://developer.apple.com/documentation/observation)
+3. [Apple Developer Documentation  -  NWPathMonitor](https://developer.apple.com/documentation/network/nwpathmonitor)
+4. [WWDC 2023  -  Discover Observation in SwiftUI (Session 10149)](https://developer.apple.com/videos/play/wwdc2023/10149/)
+5. [WWDC 2021  -  Bring Core Data concurrency to Swift and SwiftUI (Session 10017)](https://developer.apple.com/videos/play/wwdc2021/10017/)
+6. [WWDC 2021  -  Swift concurrency: Behind the scenes (Session 10254)](https://developer.apple.com/videos/play/wwdc2021/10254/)
+7. [JSONPlaceholder  -  Free Fake REST API](https://jsonplaceholder.typicode.com)
+8. [XcodeGen  -  GitHub](https://github.com/yonaskolb/XcodeGen)
+9. Kleppmann, M. (2017). *Designing Data-Intensive Applications*. O'Reilly.
+10. [Offline First  -  offlinefirst.org](http://offlinefirst.org)
+11. [Swift Evolution  -  Actors (SE-0306)](https://github.com/apple/swift-evolution/blob/main/proposals/0306-actors.md)
+12. [Swift Evolution  -  Observation (SE-0395)](https://github.com/apple/swift-evolution/blob/main/proposals/0395-observability.md)

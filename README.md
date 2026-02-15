@@ -216,40 +216,26 @@ Ako bi `id` dodeljivao server, ne bismo mogli kreirati rekord dok smo offline. U
 
 # Životni ciklus sinhronizacije
 
-```
-1. Korisnik kreira/menja knjigu
-           │
-           ▼
-2. Core Data save (syncStatus = "pending", remoteId = 0)
-   Ovo je UVEK uspešno — ne zavisi od mreže
-           │
-           ▼
-3. BooksViewModel proverava: effectivelyOnline?
-           │
-     DA ───┼─────────────────────────────────────────┐
-           │                                          │
-     NE    ▼                                          ▼
-     Knjiga čeka u       4. SyncService.syncPendingBooks()
-     lokalnoj bazi                    │
-     (syncStatus="pending")   Fetch svih "pending" i "failed"
-                                      │
-                              Za svaku knjigu:
-                                      │
-                          remoteId == 0?
-                              │          │
-                             DA         NE
-                              │          │
-                              ▼          ▼
-                           POST       PUT
-                          /posts  /posts/{id}
-                              │          │
-                    ┌─────────┴──────────┴──────────┐
-                    │                               │
-                  HTTP 201/200                  Mrežna greška
-                    │                               │
-          syncStatus = "synced"         syncStatus = "failed"
-          remoteId  = server_id         (uključuje se u sledeći
-                                         poziv syncPendingBooks)
+```mermaid
+flowchart TD
+    A["**1. Korisnik kreira/menja knjigu**"]
+    B["**2. Core Data save**<br/>(syncStatus = \"pending\", remoteId = 0)<br/>Ovo je UVEK uspešno — ne zavisi od mreže"]
+    C["**3. BooksViewModel proverava:**<br/>effectivelyOnline?"]
+
+    A --> B --> C
+
+    C -->|DA| D["**4. SyncService.syncPendingBooks()**<br/>Fetch svih \"pending\" i \"failed\" knjiga<br/>Za svaku knjigu:"]
+    C -->|NE| E["Knjiga čeka u lokalnoj bazi<br/>(syncStatus=\"pending\")"]
+
+    D --> F{"remoteId == 0?"}
+    F -->|DA| G["POST<br/>/posts"]
+    F -->|NE| H["PUT<br/>/posts/{id}"]
+
+    G --> I{"HTTP 201/200 ?"}
+    H --> I
+
+    I -->|DA| J["syncStatus = \"synced\"<br/>remoteId = server_id"]
+    I -->|NE| K["Mrežna greška<br/>syncStatus = \"failed\"<br/>(Uključiće se u sledeći syncPendingBooks)"]
 ```
 
 ### Mašina stanja `SyncStatus`

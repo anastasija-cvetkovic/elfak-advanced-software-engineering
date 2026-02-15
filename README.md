@@ -157,9 +157,9 @@ flowchart LR
     BS -.-> EXT
 ```
 
-### Dve Core Data kontekste
+### Dva Core Data konteksta: glavni (UI) i pozadinski (sync)
 
-Core Data nije thread-safe — svaka kontekst mora biti korišćena na njenom thread-u:
+Core Data nije thread-safe — svaki kontekst mora biti korišćen samo na svom thread-u. Zato aplikacija koristi **dva** konteksta: `viewContext` za čitanje na main thread-u (UI), i `backgroundContext` za pisanje tokom sinhronizacije na pozadinskom thread-u.
 
 ```swift
 // viewContext: MAIN thread — jedino za UI čitanje

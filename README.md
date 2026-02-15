@@ -20,7 +20,7 @@ Kreiranje iOS aplikacije sa offline-first arhitekturom koristeći Swift, Apple-o
 Ako si već upoznat sa Swift/iOS razvojem i samo želiš da pokreneš projekat:
 
 ```bash
-git clone https://github.com/anastasija-vucic/elfak-advanced-software-engineering.git
+git clone https://github.com/anastasija-cvetkovic/elfak-advanced-software-engineering.git
 cd elfak-advanced-software-engineering
 brew install xcodegen
 xcodegen generate

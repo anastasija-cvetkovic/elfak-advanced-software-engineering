@@ -147,19 +147,14 @@ Views i ViewModels nikad ne uvoze `CoreData` — rade isključivo sa `Book` stru
 
 ```mermaid
 flowchart LR
-    subgraph left["BookEntity (NSManagedObject)"]
-      BE["Živi u Core Data kontekstu<br>Nije thread-safe<br>Testira se teže"]
-    end
-    subgraph right["Book (Swift struct)"]
-      BS["Čisti Swift value type<br>Thread-safe (struct je kopiran)<br>Testira se bez Core Data"]
-    end
-    subgraph ext["BookEntity+Extensions.swift"]
-      EXT["entity.toDomainModel() → Book<br>entity.update(from: book)"]
-    end
-    left -- "toDomainModel()" --> right
-    right -- "update(from: book)" --> left
-    left -.-> EXT
-    right -.-> EXT
+    BE["**BookEntity (NSManagedObject)**<br/><br/>Živi u Core Data kontekstu<br/>Nije thread-safe<br/>Testira se teže"]
+    BS["**Book (Swift struct)**<br/><br/>Čisti Swift value type<br/>Thread-safe (struct je kopiran)<br/>Testira se bez Core Data"]
+    EXT["**BookEntity+Extensions.swift**<br/><br/>entity.toDomainModel() → Book<br/>entity.update(from: book)"]
+
+    BE -- "toDomainModel()" --> BS
+    BS -- "update(from: book)" --> BE
+    BE -.-> EXT
+    BS -.-> EXT
 ```
 
 ### Dve Core Data kontekste

@@ -219,16 +219,16 @@ Ako bi `id` dodeljivao server, ne bismo mogli kreirati rekord dok smo offline. U
 ```mermaid
 flowchart TD
     A["1. Korisnik kreira/menja knjigu"]
-    B["2. Core Data save\n(syncStatus = 'pending', remoteId = 0)\nOvo je UVEK uspešno — ne zavisi od mreže"]
-    C["3. BooksViewModel proverava:\neffectivelyOnline?"]
-    D["Knjiga čeka u lokalnoj bazi\n(syncStatus = 'pending')"]
-    E["4. SyncService.syncPendingBooks()\nFetch svih 'pending' i 'failed'\nZa svaku knjigu:"]
+    B["2. Core Data save<br/>(syncStatus = 'pending', remoteId = 0)<br/>Ovo je UVEK uspešno — ne zavisi od mreže"]
+    C["3. BooksViewModel proverava:<br/>effectivelyOnline?"]
+    D["Knjiga čeka u lokalnoj bazi<br/>(syncStatus = 'pending')"]
+    E["4. SyncService.syncPendingBooks()<br/>Fetch svih 'pending' i 'failed'<br/>Za svaku knjigu:"]
     F{"remoteId == 0?"}
-    G["POST\n/posts"]
-    H["PUT\n/posts/{id}"]
+    G["POST<br/>/posts"]
+    H["PUT<br/>/posts/{id}"]
     I{"HTTP 201/200?"}
-    J["syncStatus = 'synced'\nremoteId = server_id"]
-    K["Mrežna greška\nsyncStatus = 'failed'\n(Uključiće se u sledeći poziv syncPendingBooks)"]
+    J["syncStatus = 'synced'<br/>remoteId = server_id"]
+    K["Mrežna greška<br/>syncStatus = 'failed'<br/>(Uključiće se u sledeći poziv syncPendingBooks)"]
 
     A --> B
     B --> C

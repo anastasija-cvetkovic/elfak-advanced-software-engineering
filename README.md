@@ -245,21 +245,19 @@ flowchart TD
 
 ### Mašina stanja `SyncStatus`
 
-```
-                    ┌─────────────┐
-   Knjiga kreirana  │             │
-   ─────────────►  │   PENDING   │
-                    │             │
-                    └──────┬──────┘
-                           │ syncPendingBooks()
-                    ┌──────┴──────────────────┐
-                    │                         │
-               HTTP success             HTTP failure
-                    │                         │
-                    ▼                         ▼
-             ┌──────────┐             ┌────────────┐
-             │  SYNCED  │             │   FAILED   │──► retry
-             └──────────┘             └────────────┘
+```mermaid
+flowchart TB
+    KnjigaKreirana["Knjiga kreirana"]
+    PENDING["PENDING"]
+    SYNCED["SYNCED"]
+    FAILED["FAILED"]
+    DECISION{HTTP success?}
+
+    KnjigaKreirana --> PENDING
+    PENDING -- "syncPendingBooks()" --> DECISION
+    DECISION -- "Yes" --> SYNCED
+    DECISION -- "No" --> FAILED
+    FAILED -- "retry" --> PENDING
 ```
 
 # Prednosti i mane

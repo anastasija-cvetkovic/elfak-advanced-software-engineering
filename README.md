@@ -121,31 +121,28 @@ Generiše `.xcodeproj` iz čitljivog `project.yml` fajla. Prednosti:
 
 # Arhitektura aplikacije
 
-```
-┌──────────────────────────────────────────────────────────┐
-│                      SwiftUI Views                       │
-│  BookListView · BookRowView · AddEditBookView            │
-│  NetworkBannerView · SyncLogView                         │
-└────────────────────────┬─────────────────────────────────┘
-                         │  @Observable binding
-┌────────────────────────▼─────────────────────────────────┐
-│               BooksViewModel (@Observable)               │
-│  books: [Book]  ·  showSyncLog: Bool                     │
-│  addBook · updateBook · deleteBook · manualSync          │
-└──────────┬──────────────────────┬────────────────────────┘
-           │                      │
-┌──────────▼──────────┐  ┌────────▼──────────────────────┐
-│PersistenceController│  │       Services                │
-│                     │  │  NetworkMonitor (@Observable) │
-│  viewContext        │  │  SyncService    (@Observable) │
-│  backgroundContext  │  │  APIService     (actor)       │
-└──────────┬──────────┘  └──────────┬────────────────────┘
-           │                        │  async/await
-  ┌────────▼──────────┐      ┌──────▼──────────┐
-  │   Core Data       │      │ JSONPlaceholder │
-  │   BookEntity      │      │ /posts endpoint │
-  │   (SQLite)        │      └─────────────────┘
-  └───────────────────┘
+```mermaid
+---
+config:
+  layout: elk
+---
+flowchart TB
+ subgraph VIEWS["SwiftUI Views"]
+        V1["BookListView"]
+        V2["BookRowView"]
+        V3["AddEditBookView"]
+        V4["NetworkBannerView"]
+        V5["SyncLogView"]
+  end
+ subgraph SERVICES["Services"]
+        S1["NetworkMonitor (@Observable)"]
+        S2["SyncService (@Observable)"]
+        S3["APIService (actor)"]
+  end
+    VIEWS -- @Observable binding --> VM["BooksViewModel (@Observable)<br>-------------------------<br>books: [Book]<br>showSyncLog: Bool<br>addBook · updateBook · deleteBook · manualSync"]
+    VM --> PC["PersistenceController<br>-------------------------<br>viewContext<br>backgroundContext"] & S1 & S2 & S3
+    PC --> CD["Core Data<br>BookEntity (SQLite)"]
+    S3 -- async/await --> API["JSONPlaceholder<br>/posts endpoint"]
 ```
 
 ### Odvajanje domain modela od Core Data

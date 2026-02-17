@@ -305,7 +305,7 @@ flowchart TD
     I -- "NE" --> K
 ```
 
-### Mašina stanja `SyncStatus`
+### Konačni automat `SyncStatus`
 
 ```mermaid
 flowchart TB

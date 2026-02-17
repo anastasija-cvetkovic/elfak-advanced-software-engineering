@@ -11,10 +11,9 @@
 // NOTE: JSONPlaceholder always responds with success but does not actually persist data.
 // This is fine for a tutorial — we're demonstrating the sync mechanism, not a real backend.
 //
-// WHY actor?
-//   Swift's `actor` type guarantees mutual exclusion automatically.
-//   Concurrent calls to any method are serialized without manual DispatchQueues or locks.
-//   This is the modern Swift approach to thread-safe services.
+// WHY class (not actor)?
+//   APIService is defined as a class so that MockAPIService can subclass it in tests.
+//   Thread safety for network calls is provided by URLSession's own async/await support.
 
 import Foundation
 
@@ -47,7 +46,7 @@ enum APIError: LocalizedError {
 
 // MARK: - APIService
 
-actor APIService {
+class APIService {
 
     private let baseURL = "https://jsonplaceholder.typicode.com"
     private let session: URLSession

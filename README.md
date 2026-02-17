@@ -884,7 +884,7 @@ struct BookListView: View {
                 AddEditBookView(viewModel: viewModel)
             }
             .refreshable {
-                await viewModel.manualSync()
+                viewModel.manualSync()
             }
         }
     }

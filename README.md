@@ -170,7 +170,7 @@ elfak-advanced-software-engineering/
 │   │   ├── BookListView.swift          # Glavni ekran sa listom knjiga
 │   │   ├── BookRowView.swift           # Red sa naslovom, autorom i sync ikonom
 │   │   ├── AddEditBookView.swift       # Forma za dodavanje i izmenu knjige
-│   │   ├── NetworkBannerView.swift     # Crveni baner kada nema konekcije
+│   │   ├── NetworkBannerView.swift     # Baner kada nema konekcije (siv)
 │   │   └── SyncLogView.swift           # Real-time log sync operacija
 │   └── Resources/
 │       └── Assets.xcassets             # App ikona i slike

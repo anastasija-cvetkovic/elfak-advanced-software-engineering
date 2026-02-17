@@ -125,18 +125,20 @@ monitor.pathUpdateHandler = { path in
 monitor.start(queue: DispatchQueue(label: "NetworkMonitor"))
 ```
 
-### Swift Concurrency  -  `async/await` i `actor`
+### Swift Concurrency  -  `async/await`
 
-`async/await` (Swift 5.5+) eliminiše callback piramide. `actor` garantuje thread safety bez DispatchQueue ili NSLock:
+`async/await` (Swift 5.5+) eliminiše callback piramide i čini asinhroni kod čitljivim kao sinhroni. Projekat koristi `@MainActor` anotaciju tamo gde je potrebno osigurati izvršavanje na glavnom thread-u (UI operacije), ali ne definiše samostalne `actor` tipove:
 
 ```swift
-// class  -  koristi se umesto actor-a da bi MockAPIService mogao da nasledi APIService u testovima
-// Thread safety obezbeđuje URLSession-ov async/await, ne actor izolacija
-class APIService {
-    func createPost(title: String, body: String) async throws -> RemotePost {
-        let (data, _) = try await session.data(for: request)
-        return try JSONDecoder().decode(RemotePost.self, from: data)
-    }
+// @MainActor anotacija na Task-u  -  osigurava da se UI update dešava na glavnom thread-u
+Task { @MainActor [weak self] in
+    self?.isSyncing = false
+}
+
+// async/await  -  čeka na mrežni odgovor bez blokiranja thread-a
+func createPost(title: String, body: String) async throws -> RemotePost {
+    let (data, _) = try await session.data(for: request)
+    return try JSONDecoder().decode(RemotePost.self, from: data)
 }
 ```
 
@@ -196,7 +198,7 @@ flowchart TB
  subgraph SERVICES["Services"]
         S1["NetworkMonitor (@Observable)"]
         S2["SyncService (@Observable)"]
-        S3["APIService (actor)"]
+        S3["APIService"]
   end
     VIEWS -- @Observable binding --> VM["BooksViewModel (@Observable)<br>-------------------------<br>books: [Book]<br>showSyncLog: Bool<br>addBook · updateBook · deleteBook · manualSync"]
     VM --> PC["PersistenceController<br>-------------------------<br>viewContext<br>backgroundContext"] & S1 & S2 & S3
@@ -1086,7 +1088,5 @@ SwiftData je budućnost iOS persistencije. Međutim, većina produkcijskih aplik
 6. [WWDC 2021  -  Swift concurrency: Behind the scenes (Session 10254)](https://developer.apple.com/videos/play/wwdc2021/10254/)
 7. [JSONPlaceholder  -  Free Fake REST API](https://jsonplaceholder.typicode.com)
 8. [XcodeGen  -  GitHub](https://github.com/yonaskolb/XcodeGen)
-9. Kleppmann, M. (2017). *Designing Data-Intensive Applications*. O'Reilly.
-10. [Offline First  -  offlinefirst.org](http://offlinefirst.org)
-11. [Swift Evolution  -  Actors (SE-0306)](https://github.com/apple/swift-evolution/blob/main/proposals/0306-actors.md)
-12. [Swift Evolution  -  Observation (SE-0395)](https://github.com/apple/swift-evolution/blob/main/proposals/0395-observability.md)
+9. [Offline First  -  offlinefirst.org](http://offlinefirst.org)
+10. [Swift Evolution  -  Observation (SE-0395)](https://github.com/apple/swift-evolution/blob/main/proposals/0395-observability.md)

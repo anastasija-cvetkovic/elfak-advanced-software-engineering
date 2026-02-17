@@ -103,6 +103,11 @@ struct BookListView: View {
                 ToolbarItem(placement: .primaryAction) {
                     Button { showAddSheet = true } label: {
                         Image(systemName: "plus")
+                            .foregroundStyle(
+                                viewModel.networkMonitor.effectivelyOnline
+                                    ? Color.accentColor
+                                    : .white
+                            )
                     }
                 }
                 ToolbarItem(placement: .navigationBarLeading) {

@@ -121,6 +121,7 @@ final class BooksViewModel {
         context.delete(entity)
         persistence.save(context: context)
         fetchBooks()
+        syncService.logDeletion(bookTitle: book.title)
     }
 
     // MARK: - Sample Books

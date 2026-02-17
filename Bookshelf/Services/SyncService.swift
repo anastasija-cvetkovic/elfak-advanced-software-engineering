@@ -144,7 +144,7 @@ final class SyncService {
                 id:         UUID(),
                 title:      String(post.title.prefix(60)).capitalized,
                 author:     "Author #\(post.userId)",
-                rating:     Int.random(in: 3...5),
+                rating:     0,
                 notes:      String(post.body.prefix(120)),
                 isRead:     Bool.random(),
                 syncStatus: .synced,
@@ -153,6 +153,15 @@ final class SyncService {
                 updatedAt:  Date()
             )
         }
+    }
+
+    // MARK: - Local Deletion Log
+
+    /// Called by BooksViewModel when a book is deleted locally.
+    /// Deletion is not synced to the server — it is only recorded in the log.
+    func logDeletion(bookTitle: String) {
+        appendLog(bookTitle: bookTitle, operation: "DELETE",
+                  outcome: "SUCCESS", detail: "Deleted locally")
     }
 
     // MARK: - Sync Log

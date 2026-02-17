@@ -47,9 +47,12 @@ final class SyncService {
     /// Processes every pending/failed book in the local queue.
     /// Safe to call concurrently — guard prevents overlapping runs.
     func syncPendingBooks() async {
-        let alreadySyncing = await MainActor.run { isSyncing }
+        let alreadySyncing = await MainActor.run {
+            guard !isSyncing else { return true }
+            isSyncing = true
+            return false
+        }
         guard !alreadySyncing else { return }
-        await MainActor.run { isSyncing = true }
         defer {
             Task { @MainActor [weak self] in
                 self?.isSyncing = false

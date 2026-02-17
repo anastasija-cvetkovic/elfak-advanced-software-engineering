@@ -130,8 +130,9 @@ monitor.start(queue: DispatchQueue(label: "NetworkMonitor"))
 `async/await` (Swift 5.5+) eliminiše callback piramide. `actor` garantuje thread safety bez DispatchQueue ili NSLock:
 
 ```swift
-// actor  -  Swift kompajler garantuje da samo jedan task istovremeno pristupa metodama
-actor APIService {
+// class  -  koristi se umesto actor-a da bi MockAPIService mogao da nasledi APIService u testovima
+// Thread safety obezbeđuje URLSession-ov async/await, ne actor izolacija
+class APIService {
     func createPost(title: String, body: String) async throws -> RemotePost {
         let (data, _) = try await session.data(for: request)
         return try JSONDecoder().decode(RemotePost.self, from: data)
@@ -162,7 +163,7 @@ elfak-advanced-software-engineering/
 │   │   └── BookEntity+Extensions.swift # Konverzija: entity.toDomainModel() / entity.update(from:)
 │   ├── Services/
 │   │   ├── NetworkMonitor.swift        # NWPathMonitor wrapper (@Observable)
-│   │   ├── APIService.swift            # HTTP klijent za JSONPlaceholder (actor)
+│   │   ├── APIService.swift            # HTTP klijent za JSONPlaceholder
 │   │   └── SyncService.swift           # Sync logika, retry, sync log (@Observable)
 │   ├── ViewModels/
 │   │   └── BooksViewModel.swift        # Jedini ViewModel; CRUD + network observing (@Observable)
@@ -176,7 +177,7 @@ elfak-advanced-software-engineering/
 │       └── Assets.xcassets             # App ikona i slike
 ├── BookshelfTests/                     # Unit testovi
 │   ├── BooksViewModelTests.swift       # CRUD i offline ponašanje (9 testova)
-│   └── SyncServiceTests.swift          # Sync logika, retry, deduplicija (12 testova)
+│   └── SyncServiceTests.swift          # Sync logika, retry, sprečavanje duplikata (9 testova)
 ├── project.yml                         # XcodeGen konfiguracija
 └── README.md
 ```
@@ -511,9 +512,9 @@ enum SyncStatus: String {
 
     var systemImage: String {
         switch self {
-        case .pending: return "clock"
-        case .synced:  return "checkmark.icloud"
-        case .failed:  return "exclamationmark.icloud"
+        case .pending: return "clock.arrow.circlepath"
+        case .synced:  return "checkmark.icloud.fill"
+        case .failed:  return "exclamationmark.icloud.fill"
         }
     }
 
@@ -602,7 +603,7 @@ final class NetworkMonitor {
 
 **7. `APIService`  -  HTTP klijent**
 
-Kreirajte `Services/APIService.swift`. Koristimo `actor` za kompajler-garantovanu thread safety:
+Kreirajte `Services/APIService.swift`. Koristimo `class` (ne `actor`) jer `MockAPIService` u testovima nasleđuje `APIService`  -  Swift `actor` ne podržava nasledjivanje. Thread safety obezbeđuje URLSession-ov sopstveni async/await mehanizam.
 
 ```swift
 import Foundation
@@ -611,30 +612,53 @@ struct RemotePost: Codable {
     let id: Int
     let title: String
     let body: String
+    let userId: Int
 }
 
-actor APIService {
-    private let session = URLSession.shared
+class APIService {
+    private let session: URLSession
     private let baseURL = "https://jsonplaceholder.typicode.com"
 
-    func createPost(title: String, body: String) async throws -> RemotePost {
+    init(session: URLSession = .shared) {
+        self.session = session
+    }
+
+    // Preuzima prvih N postova  -  koristi se za "Add Sample Books"
+    func fetchPosts(limit: Int = 5) async throws -> [RemotePost] {
+        let url = URL(string: "\(baseURL)/posts?_limit=\(limit)")!
+        let (data, _) = try await session.data(from: url)
+        return try JSONDecoder().decode([RemotePost].self, from: data)
+    }
+
+    // POST  -  sinhronizuje novu knjigu sa serverom
+    func createPost(title: String, body: String, userId: Int = 1) async throws -> RemotePost {
         var request = URLRequest(url: URL(string: "\(baseURL)/posts")!)
         request.httpMethod = "POST"
-        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        request.httpBody = try JSONEncoder().encode(["title": title, "body": body])
+        request.setValue("application/json; charset=UTF-8", forHTTPHeaderField: "Content-Type")
+        let payload: [String: Any] = ["title": title, "body": body, "userId": userId]
+        request.httpBody = try JSONSerialization.data(withJSONObject: payload)
 
         let (data, _) = try await session.data(for: request)
         return try JSONDecoder().decode(RemotePost.self, from: data)
     }
 
+    // PUT  -  sinhronizuje izmenjenu knjigu
     func updatePost(id: Int, title: String, body: String) async throws -> RemotePost {
         var request = URLRequest(url: URL(string: "\(baseURL)/posts/\(id)")!)
         request.httpMethod = "PUT"
-        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        request.httpBody = try JSONEncoder().encode(["title": title, "body": body])
+        request.setValue("application/json; charset=UTF-8", forHTTPHeaderField: "Content-Type")
+        let payload: [String: Any] = ["id": id, "title": title, "body": body, "userId": 1]
+        request.httpBody = try JSONSerialization.data(withJSONObject: payload)
 
         let (data, _) = try await session.data(for: request)
         return try JSONDecoder().decode(RemotePost.self, from: data)
+    }
+
+    // DELETE  -  briše post (JSONPlaceholder simulira brisanje, ne perzistuje)
+    func deletePost(id: Int) async throws {
+        var request = URLRequest(url: URL(string: "\(baseURL)/posts/\(id)")!)
+        request.httpMethod = "DELETE"
+        _ = try await session.data(for: request)
     }
 }
 ```
@@ -673,12 +697,12 @@ final class SyncService {
             do {
                 if book.remoteId == 0 {
                     // Nova knjiga  -  POST
-                    let remote = try await api.createPost(title: book.title, body: book.author)
+                    let remote = try await api.createPost(title: book.title, body: book.notes)
                     await markSynced(bookId: book.id, remoteId: Int64(remote.id), context: context)
                 } else {
                     // Postojeća knjiga  -  PUT
                     let _ = try await api.updatePost(id: Int(book.remoteId),
-                                                     title: book.title, body: book.author)
+                                                     title: book.title, body: book.notes)
                     await markSynced(bookId: book.id, remoteId: book.remoteId, context: context)
                 }
             } catch {
@@ -729,20 +753,22 @@ import CoreData
 import Observation
 
 @Observable
-@MainActor
 final class BooksViewModel {
     var books: [Book] = []
-    var errorMessage: String? = nil
+    var errorMessage: String?
     var showSyncLog: Bool = false
 
     let networkMonitor: NetworkMonitor
     let syncService: SyncService
     private let persistence: PersistenceController
 
-    init(persistence: PersistenceController = .shared) {
-        self.persistence = persistence
-        self.networkMonitor = NetworkMonitor()
-        self.syncService = SyncService(persistence: persistence)
+    // networkMonitor i syncService se mogu injektovati izvana  -  koristi se u testovima
+    init(persistence: PersistenceController = .shared,
+         networkMonitor: NetworkMonitor = NetworkMonitor(),
+         syncService: SyncService? = nil) {
+        self.persistence    = persistence
+        self.networkMonitor = networkMonitor
+        self.syncService    = syncService ?? SyncService(persistence: persistence)
         fetchBooks()
         observeNetworkChanges()
     }
@@ -769,38 +795,50 @@ final class BooksViewModel {
         fetchBooks()
     }
 
-    func manualSync() async {
+    // Sinhrona  -  stvarni sync se pokreće u pozadinskom Task-u
+    func manualSync() {
         guard networkMonitor.effectivelyOnline else {
-            errorMessage = "Nema internet konekcije."
+            errorMessage = "Cannot sync while offline. Connect to the internet and try again."
             return
         }
-        await syncService.syncPendingBooks()
-        fetchBooks()
+        triggerSyncIfOnline()
     }
 
-    private func fetchBooks() {
+    func fetchBooks() {
         let context = persistence.viewContext
         let request = BookEntity.fetchRequest()
-        request.sortDescriptors = [NSSortDescriptor(key: "createdAt", ascending: false)]
+        request.sortDescriptors = [NSSortDescriptor(keyPath: \BookEntity.createdAt, ascending: false)]
         books = ((try? context.fetch(request)) ?? []).map { $0.toDomainModel() }
     }
 
     private func triggerSyncIfOnline() {
         guard networkMonitor.effectivelyOnline else { return }
-        Task { await syncService.syncPendingBooks(); fetchBooks() }
+        Task {
+            await syncService.syncPendingBooks()
+            await MainActor.run { fetchBooks() }
+        }
     }
 
+    // withObservationTracking reaguje tačno kada se effectivelyOnline promeni  -
+    // efikasnije od polling-a sa Task.sleep
     private func observeNetworkChanges() {
-        Task {
-            var wasOnline = networkMonitor.effectivelyOnline
-            while true {
-                try? await Task.sleep(nanoseconds: 500_000_000)
-                let isOnline = networkMonitor.effectivelyOnline
-                if isOnline && !wasOnline {
-                    await syncService.syncPendingBooks()
-                    fetchBooks()
+        var previouslyOnline = networkMonitor.effectivelyOnline
+        Task { @MainActor [weak self] in
+            while !Task.isCancelled {
+                guard let self else { return }
+                await withCheckedContinuation { continuation in
+                    withObservationTracking {
+                        _ = self.networkMonitor.effectivelyOnline
+                    } onChange: {
+                        continuation.resume()
+                    }
                 }
-                wasOnline = isOnline
+                let isOnline = self.networkMonitor.effectivelyOnline
+                if isOnline && !previouslyOnline {
+                    await self.syncService.syncPendingBooks()
+                    self.fetchBooks()
+                }
+                previouslyOnline = isOnline
             }
         }
     }
@@ -940,17 +978,24 @@ Testovi koriste `PersistenceController(inMemory: true)`  -  Core Data čuva poda
 **`BooksViewModelTests`**  -  CRUD operacije i offline ponašanje:
 - `test_addBook_createsRecord`  -  kreiranje knjige pravi rekord u Core Data
 - `test_addBook_whileOffline_isPending`  -  knjiga kreirana offline dobija `.pending` status
+- `test_addBook_alwaysStartsPending`  -  svaka nova knjiga počinje kao `.pending`, čak i kada je mreža dostupna
 - `test_deleteBook_removesFromStore`  -  brisanje uklanja rekord
+- `test_deleteBook_onlyRemovesTargetBook`  -  brisanje ne utiče na ostale knjige
 - `test_updateBook_marksPending`  -  izmena synced knjige resetuje status na `.pending`
 - `test_fetchBooks_sortedNewestFirst`  -  sortiranje po datumu kreiranja (najnovije prvo)
+- `test_manualSync_whileOffline_setsErrorMessage`  -  manualSync bez mreže postavlja poruku o grešci
+- `test_manualSync_whileOnline_doesNotSetError`  -  manualSync sa mrežom ne postavlja grešku
 
-**`SyncServiceTests`**  -  sync logika, retry i deduplicija:
+**`SyncServiceTests`**  -  sync logika, retry i sprečavanje duplikata:
 - `test_syncPendingBooks_syncsAllPending`  -  sve pending knjige postaju synced
 - `test_newBook_usesCreate`  -  nova knjiga (remoteId=0) poziva POST
 - `test_existingBook_usesUpdate`  -  knjiga sa remoteId poziva PUT
 - `test_syncPendingBooks_onNetworkError_marksFailed`  -  mrežna greška → failed status
 - `test_failedBooks_areRetried`  -  failed knjige ulaze u sledeći sync pokušaj
-- `test_concurrentSyncCalls_doNotDuplicate`  -  dupli pozivi ne rezultuju duplikatima
+- `test_syncedBooks_areNotResynced`  -  već synced knjige ne pozivaju API
+- `test_concurrentSyncCalls_doNotDuplicate`  -  paralelni pozivi ne rezultuju duplikatima
+- `test_successfulSync_populatesSyncLog`  -  uspešan sync dodaje unos u syncLog
+- `test_failedSync_populatesLogWithFailure`  -  neuspešan sync dodaje unos sa ishodom "FAILED"
 
 # Česti problemi
 

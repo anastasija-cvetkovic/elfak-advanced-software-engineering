@@ -155,7 +155,13 @@ final class SyncService {
         }
     }
 
-    // MARK: - Local Deletion Log
+    // MARK: - Local Operation Logs
+
+    /// Called by BooksViewModel immediately after a new book is saved to Core Data.
+    func logQueued(bookTitle: String, operation: String) {
+        appendLog(bookTitle: bookTitle, operation: operation,
+                  outcome: "QUEUED", detail: "Saved locally, pending sync")
+    }
 
     /// Called by BooksViewModel when a book is deleted locally.
     /// Deletion is not synced to the server — it is only recorded in the log.

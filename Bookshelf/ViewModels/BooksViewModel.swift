@@ -86,6 +86,7 @@ final class BooksViewModel {
         entity.update(from: book)
         persistence.save(context: context)
         fetchBooks()
+        syncService.logQueued(bookTitle: title, operation: "CREATE")
 
         // Attempt immediate sync if we're online
         triggerSyncIfOnline()
@@ -108,6 +109,7 @@ final class BooksViewModel {
         entity.updatedAt  = Date()
         persistence.save(context: context)
         fetchBooks()
+        syncService.logQueued(bookTitle: title, operation: "UPDATE")
 
         triggerSyncIfOnline()
     }
